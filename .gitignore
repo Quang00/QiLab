@@ -58,3 +58,6 @@
 
 #github
 .github
+
+#logs
+*.log

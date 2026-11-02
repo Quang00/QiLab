@@ -69,6 +69,29 @@ Build options:
 
 Artifacts appear in `build/`: the `qilab` executable, static libraries, and (if `BUILD_TESTING=ON`) test binaries under `build/test/`.
 
+
+## Build dev envirionment and extract results from (mock_handlers.cpp)
+1. Build:
+```bash
+cmake -S . -B build-dev -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DRUN_MOCKED_TRANSMISSION"
+cmake --build build-dev -j$(nproc) --target qilab
+```
+
+2. Run command with network config:
+```bash
+QILAB_CONFIG_PATH=docs/config_example.yaml timeout 1 ./build-dev/qilab 2>log.log
+```
+
+3. Get measurements:
+```bash
+python3 scripts/extract_measurements.py log.log
+```
+
+4. Get noise:
+```bash
+python3 scripts/analyze_gate_noise_log.py log.log
+```
+
 ## Run
 ```bash
 ./build/qilab
@@ -82,11 +105,6 @@ Runtime notes:
 - Graceful shutdown: send SIGINT or SIGTERM; each runner's `on_abort()` is called before the threads are joined.
 
 
-## Build in mock environment (e.g., with stim simulator)
-```bash
-cmake -S . -B build-stim -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DRUN_MOCKED_TRANSMISSION"
-cmake --build build-stim -j$(nproc) --target qilab
-```
 
 ### Telemetry output paths
 Both instrument sinks write to fixed filenames under a directory that can be
