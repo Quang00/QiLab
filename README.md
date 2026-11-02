@@ -81,6 +81,13 @@ Runtime notes:
 - `QILAB_DAQ=1` (env var) enables the data-acquisition sink (see below); anything else or unset leaves it disabled.
 - Graceful shutdown: send SIGINT or SIGTERM; each runner's `on_abort()` is called before the threads are joined.
 
+
+## Build in mock environment (e.g., with stim simulator)
+```bash
+cmake -S . -B build-stim -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DRUN_MOCKED_TRANSMISSION"
+cmake --build build-stim -j$(nproc) --target qilab
+```
+
 ### Telemetry output paths
 Both instrument sinks write to fixed filenames under a directory that can be
 relocated by env var. This is the interface `qilab_web_control` reads to offer
