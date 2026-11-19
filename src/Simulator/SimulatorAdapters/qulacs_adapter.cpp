@@ -119,7 +119,19 @@ bool QulacsAdapter::qubit_move(uint8_t qubit1_address, uint8_t qubit2_address) {
 }
 
 bool QulacsAdapter::qubit_swap(uint8_t qubit1_address, uint8_t qubit2_address) {
-    return false;
+    if (qubit1_address == qubit2_address) {
+        LOG_ERROR("Cannot swap qubit : " + std::to_string(qubit1_address) +
+                  " with itself!");
+        return false;
+    }
+
+    std::unique_ptr<QuantumGateBase> swap(
+        gate::SWAP(qubit1_address, qubit2_address));
+    swap->update_quantum_state(state.get());
+
+    LOG_INFO("Swapped qubits " + std::to_string(qubit1_address) + " and " +
+             std::to_string(qubit2_address));
+    return true;
 }
 
 bool QulacsAdapter::entanglement_swap(uint8_t qubit1_address,
