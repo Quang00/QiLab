@@ -4,7 +4,9 @@
 
 #include "qulacs_adapter.hpp"
 
+#include <cppsim/gate_factory.hpp>
 #include <cppsim/state.hpp>
+#include <numbers>
 #include <string>
 
 #include "logger/logger_api.hpp"
@@ -19,9 +21,6 @@ QulacsAdapter::QulacsAdapter(std::seed_seq &seed_seq, const uint8_t &num_qubits)
 QulacsAdapter::~QulacsAdapter() = default;
 
 bool QulacsAdapter::allocate_qubits(uint8_t num_qubits) {
-    if (num_qubits == 0) {
-        return true;
-    }
     state = std::make_unique<QuantumStateCpu>(registered_qubits + num_qubits);
     registered_qubits += num_qubits;
 
@@ -35,7 +34,28 @@ bool QulacsAdapter::qubit_initialize(uint8_t qubit_address) { return false; }
 
 bool QulacsAdapter::single_qubit_gate(uint8_t qubit_address, Angle_t angle,
                                       Axis_t axis) {
-    return false;
+    const int k = static_cast<int>(angle);
+    // Convert the rotation angle to radians
+    const double theta = (k < 16 ? k : k - 32) * std::numbers::pi / 16.0;
+
+    std::unique_ptr<QuantumGateBase> rotation;
+    if (axis == Axis_t::X_AXIS) {
+        rotation.reset(gate::RotX(qubit_address, theta));
+    } else if (axis == Axis_t::Y_AXIS) {
+        rotation.reset(gate::RotY(qubit_address, theta));
+    } else if (axis == Axis_t::Z_AXIS) {
+        rotation.reset(gate::RotZ(qubit_address, theta));
+    } else {
+        LOG_WARNING("Invalid axis for single-qubit gate: " +
+                    std::to_string(axis));
+        return false;
+    }
+    rotation->update_quantum_state(state.get());
+
+    LOG_INFO(
+        "Applying single-qubit gate: qubit=" + std::to_string(qubit_address) +
+        " angle=" + std::to_string(angle) + " axis=" + std::to_string(axis));
+    return true;
 }
 
 bool QulacsAdapter::single_qubit_noise(uint8_t qubit_address,
