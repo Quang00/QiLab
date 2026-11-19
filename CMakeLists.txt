@@ -83,6 +83,21 @@ if(NOT stim_POPULATED)
   add_subdirectory(${stim_SOURCE_DIR})
 endif()
 
+#get the qulacs library
+FetchContent_Declare(qulacs
+        GIT_REPOSITORY https://github.com/qulacs/qulacs.git
+        GIT_TAG v0.6.14)
+FetchContent_GetProperties(qulacs)
+if(NOT qulacs_POPULATED)
+  FetchContent_Populate(qulacs)
+  set(USE_PYTHON No)
+  set(USE_OMP No)
+  set(USE_SIMD No)
+  set(OPT_FLAGS "")
+  add_subdirectory(${qulacs_SOURCE_DIR})
+  target_include_directories(cppsim_static SYSTEM INTERFACE ${qulacs_SOURCE_DIR}/include)
+endif()
+
 
 # ---- Options ----
 option(ENABLE_PROFILING "Enable fast TLS profiler" ON)
@@ -152,7 +167,7 @@ target_include_directories(qilab_lib PUBLIC
   ${PROJECT_SOURCE_DIR}/src
   ${CMAKE_BINARY_DIR}/generated
 )
-target_link_libraries(qilab_lib PRIVATE libstim profiler data_acquisition)
+target_link_libraries(qilab_lib PRIVATE libstim cppsim_static profiler data_acquisition)
 
 include_directories("src")
 
@@ -179,7 +194,7 @@ add_executable(qilab
   src/ConfigurationEngine/config_loader.cpp
     )
 target_include_directories(qilab PRIVATE ${CMAKE_BINARY_DIR}/generated)
-target_link_libraries(qilab PRIVATE libstim profiler logger data_acquisition)
+target_link_libraries(qilab PRIVATE libstim cppsim_static profiler logger data_acquisition)
 
 include(CTest)                 # defines BUILD_TESTING (default ON)
 
