@@ -121,7 +121,27 @@ bool QulacsAdapter::two_qubit_gate(uint8_t qubit1_address,
 bool QulacsAdapter::two_qubit_depolarizing_noise(
     uint8_t qubit1_address, uint8_t qubit2_address,
     float depolarizing_probability) {
-    return false;
+    if (qubit1_address == qubit2_address) {
+        LOG_ERROR(
+            "Cannot apply two-qubit depolarizing noise to the same qubit " +
+            std::to_string(qubit1_address));
+        return false;
+    }
+
+    std::uniform_real_distribution<double> uniform(0.0, 1.0);
+    const double r = uniform(generator);
+    if (r < depolarizing_probability) {
+        const UINT k = std::uniform_int_distribution<UINT>(1, 15)(generator);
+        std::unique_ptr<QuantumGateBase> pauli(
+            gate::Pauli({qubit1_address, qubit2_address}, {k % 4, k / 4}));
+        pauli->update_quantum_state(state.get());
+    }
+
+    LOG_INFO("Applied two-qubit depolarizing noise: q1=" +
+             std::to_string(qubit1_address) +
+             " q2=" + std::to_string(qubit2_address) +
+             " p=" + std::to_string(depolarizing_probability));
+    return true;
 }
 
 uint8_t QulacsAdapter::qubit_measure(uint8_t qubit_address, bool basis) {
