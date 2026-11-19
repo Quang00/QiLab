@@ -64,7 +64,28 @@ bool QulacsAdapter::single_qubit_noise(uint8_t qubit_address,
                                        float x_noise_probability,
                                        float y_noise_probability,
                                        float z_noise_probability) {
-    return false;
+    std::uniform_real_distribution<double> uniform(0.0, 1.0);
+    const double r = uniform(generator);
+
+    std::unique_ptr<QuantumGateBase> pauli;
+    if (r < x_noise_probability) {
+        pauli.reset(gate::X(qubit_address));
+    } else if (r < x_noise_probability + y_noise_probability) {
+        pauli.reset(gate::Y(qubit_address));
+    } else if (r < x_noise_probability + y_noise_probability +
+                       z_noise_probability) {
+        pauli.reset(gate::Z(qubit_address));
+    }
+    if (pauli) {
+        pauli->update_quantum_state(state.get());
+    }
+
+    LOG_INFO(
+        "Applied single-qubit noise: qubit=" + std::to_string(qubit_address) +
+        " x_noise=" + std::to_string(x_noise_probability) +
+        " y_noise=" + std::to_string(y_noise_probability) +
+        " z_noise=" + std::to_string(z_noise_probability));
+    return true;
 }
 
 bool QulacsAdapter::two_qubit_gate(uint8_t qubit1_address,
