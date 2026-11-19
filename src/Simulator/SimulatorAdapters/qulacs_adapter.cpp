@@ -145,7 +145,15 @@ bool QulacsAdapter::two_qubit_depolarizing_noise(
 }
 
 uint8_t QulacsAdapter::qubit_measure(uint8_t qubit_address, bool basis) {
-    return 0;
+    std::unique_ptr<QuantumGateBase> measure(gate::Measurement(
+        qubit_address, 0, static_cast<UINT>(generator())));
+    measure->update_quantum_state(state.get());
+    const uint8_t measurement = state->get_classical_value(0);
+
+    LOG_INFO("Measured qubit " + std::to_string(qubit_address) + " in " +
+             (basis ? "X" : "Z") +
+             "-basis with result: " + std::to_string(measurement));
+    return measurement;
 }
 
 int8_t QulacsAdapter::attempt_entanglement(uint16_t fidelity,
