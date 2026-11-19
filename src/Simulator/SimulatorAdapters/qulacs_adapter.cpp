@@ -34,21 +34,23 @@ bool QulacsAdapter::qubit_initialize(uint8_t qubit_address) { return false; }
 
 bool QulacsAdapter::single_qubit_gate(uint8_t qubit_address, Angle_t angle,
                                       Axis_t axis) {
-    const int k = static_cast<int>(angle);
-    // Convert the rotation angle to radians
-    const double theta = (k < 16 ? k : k - 32) * std::numbers::pi / 16.0;
+    if (axis != Axis_t::X_AXIS && axis != Axis_t::Y_AXIS &&
+        axis != Axis_t::Z_AXIS) {
+        LOG_WARNING("Invalid axis for single-qubit gate: " +
+                    std::to_string(axis));
+        return false;
+    }
+
+    const double theta =
+        (angle < 16 ? angle : angle - 32) * std::numbers::pi / 16.0;
 
     std::unique_ptr<QuantumGateBase> rotation;
     if (axis == Axis_t::X_AXIS) {
         rotation.reset(gate::RotX(qubit_address, theta));
     } else if (axis == Axis_t::Y_AXIS) {
         rotation.reset(gate::RotY(qubit_address, theta));
-    } else if (axis == Axis_t::Z_AXIS) {
-        rotation.reset(gate::RotZ(qubit_address, theta));
     } else {
-        LOG_WARNING("Invalid axis for single-qubit gate: " +
-                    std::to_string(axis));
-        return false;
+        rotation.reset(gate::RotZ(qubit_address, theta));
     }
     rotation->update_quantum_state(state.get());
 
@@ -68,7 +70,31 @@ bool QulacsAdapter::single_qubit_noise(uint8_t qubit_address,
 bool QulacsAdapter::two_qubit_gate(uint8_t qubit1_address,
                                    uint8_t qubit2_address, Angle_t angle,
                                    Axis_t axis) {
-    return false;
+    if (qubit1_address == qubit2_address) {
+        LOG_ERROR("Cannot apply a two qubit gate to the same qubit 1:  " +
+                  std::to_string(qubit1_address) +
+                  ", 2: " + std::to_string(qubit2_address));
+        return false;
+    }
+    if (axis != Axis_t::X_AXIS && axis != Axis_t::Y_AXIS &&
+        axis != Axis_t::Z_AXIS) {
+        LOG_WARNING("Invalid axis for two-qubit gate: " + std::to_string(axis));
+        return false;
+    }
+
+    const double theta =
+        (angle < 16 ? angle : angle - 32) * std::numbers::pi / 16.0;
+    const UINT pauli = axis + 1;
+
+    std::unique_ptr<QuantumGateBase> rotation(gate::PauliRotation(
+        {qubit1_address, qubit2_address}, {pauli, pauli}, -theta));
+    rotation->update_quantum_state(state.get());
+
+    LOG_INFO(
+        "Applying two-qubit gate: qubits=" + std::to_string(qubit1_address) +
+        "," + std::to_string(qubit2_address) +
+        " angle=" + std::to_string(angle) + " axis=" + std::to_string(axis));
+    return true;
 }
 
 bool QulacsAdapter::two_qubit_depolarizing_noise(
