@@ -398,7 +398,7 @@ int16_t SimulatorManager::register_node(const NodeConfig &node_config)
 
     // Call the simulator to allocate qubits for this node
     // This is necessary to ensure that the STIM Tableau is aware of the new qubits and can manage their state correctly.
-    simulator_inst->allocate_qubits(registered_qubits);
+    simulator_inst->allocate_qubits(requested_qubits);
 
     LOG_INFO("Registered new node " + std::to_string(node_id) + " with " + std::to_string(requested_qubits) + " qubits at offset " + std::to_string(nodes[node_id].first) + ".");
     return node_id;
