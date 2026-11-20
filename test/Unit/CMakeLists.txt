@@ -21,6 +21,7 @@ add_executable(unit_tests
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorManager/test_operations_engine.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorAdapters/test_stim_adapter.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorAdapters/test_stim_nv_adapter.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorAdapters/test_qulacs_adapter.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorAdapters/test_mock_adapter.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorRunners/test_simulator_runner.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/Simulator/SimulatorRunners/test_entanglement_runner.cpp
