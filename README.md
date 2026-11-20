@@ -291,6 +291,7 @@ QiLab is released under the [Clear BSD License](LICENSE) (SPDX: `BSD-3-Clause-Cl
 Third-party dependencies are fetched at build time and remain under their own licenses:
 
 - [Stim](https://github.com/quantumlib/stim) (v1.15.0): Apache License 2.0. Statically linked into the `qilab` binary. Release archives include its license as `LICENSE.stim`.
+- [Qulacs](https://github.com/qulacs/qulacs) (v0.6.14): MIT License. Statically linked into the `qilab` binary.
 - [GoogleTest](https://github.com/google/googletest) (tests only, not shipped): BSD 3-Clause License.
 
 ---
