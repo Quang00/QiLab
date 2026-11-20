@@ -183,7 +183,7 @@ int main()
     DataTransmissionRunner transmission_node(node_ids, std::move(command_handlerA), broker, config->system.transmission_cycle_time_us);
 #else
     LOG_INFO("Using mocked transmission handler");
-    std::unique_ptr<ITransmissionHandler> transportB = std::make_unique<MockHandler>();
+    std::unique_ptr<ITransmissionHandler> transportB = std::make_unique<MockHandler>(config->nodes[0].num_qubits);
     std::unique_ptr<TransmissionProcessor> command_handlerB = std::make_unique<TransmissionProcessor>(std::move(transportB));
     DataTransmissionRunner transmission_node(node_ids, std::move(command_handlerB), broker, config->system.transmission_cycle_time_us);
 #endif
