@@ -145,8 +145,8 @@ bool QulacsAdapter::two_qubit_depolarizing_noise(
 }
 
 uint8_t QulacsAdapter::qubit_measure(uint8_t qubit_address, bool basis) {
-    std::unique_ptr<QuantumGateBase> measure(gate::Measurement(
-        qubit_address, 0, static_cast<UINT>(generator())));
+    std::unique_ptr<QuantumGateBase> measure(
+        gate::Measurement(qubit_address, 0, static_cast<UINT>(generator())));
     measure->update_quantum_state(state.get());
     const uint8_t measurement = state->get_classical_value(0);
 
@@ -185,5 +185,8 @@ bool QulacsAdapter::qubit_swap(uint8_t qubit1_address, uint8_t qubit2_address) {
 
 bool QulacsAdapter::entanglement_swap(uint8_t qubit1_address,
                                       uint8_t qubit2_address) {
+    LOG_ERROR(
+        "Entanglement_swap is not implemented yet! The nodes should instead "
+        "send the protocol jointly (set of gates) to perform the swap.");
     return false;
 }
