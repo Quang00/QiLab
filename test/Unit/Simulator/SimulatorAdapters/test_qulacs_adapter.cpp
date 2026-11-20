@@ -55,11 +55,14 @@ TEST(QulacsAdapterTest, TwoQubitGateZX) {
     EXPECT_EQ(adapter->qubit_measure(1, false), 1);
 }
 
-TEST(QulacsAdapterTest, AttemptEntanglementPsiPlus) {
+TEST(QulacsAdapterTest, AttemptEntanglementBellState) {
     auto adapter = make_adapter(2);
-    EXPECT_EQ(adapter->attempt_entanglement(1, 0, 1, true, 0), 2);
-    EXPECT_NE(adapter->qubit_measure(0, false),
-              adapter->qubit_measure(1, false));
+    const int8_t bell_state = adapter->attempt_entanglement(1, 0, 1, true, 0);
+    ASSERT_GE(bell_state, 0);
+    ASSERT_LE(bell_state, 3);
+    EXPECT_EQ(
+        adapter->qubit_measure(0, false) != adapter->qubit_measure(1, false),
+        bell_state >= 2);
 }
 
 TEST(QulacsAdapterTest, QubitSwapQubits) {

@@ -189,19 +189,42 @@ int8_t QulacsAdapter::attempt_entanglement(uint16_t fidelity,
     qubit_initialize(local_qubit);
     qubit_initialize(neighbour_address);
     std::unique_ptr<QuantumGateBase> h(gate::H(local_qubit));
-    std::unique_ptr<QuantumGateBase> x(gate::X(neighbour_address));
     std::unique_ptr<QuantumGateBase> cnot(
         gate::CNOT(local_qubit, neighbour_address));
     h->update_quantum_state(state.get());
-    x->update_quantum_state(state.get());
     cnot->update_quantum_state(state.get());
-    // Entangled state will be |psi+> by default, as done in
-    // StimAdapterNVCenters.
-    LOG_INFO(
-        "attempt_entanglement (initiator): created |psi+> = (|01> + |10>) / "
-        "sqrt(2) on Q" +
-        std::to_string(local_qubit) + ",Q" + std::to_string(neighbour_address));
-    return 2;
+
+    const int8_t bell_state = static_cast<int8_t>(
+        std::uniform_int_distribution<int>(0, 3)(generator));
+    switch (bell_state) {
+        case 0:  // |phi+> = (|00> + |11>) / sqrt(2)
+            break;
+        case 1: {  // |phi-> = (|00> - |11>) / sqrt(2)
+            std::unique_ptr<QuantumGateBase> z(gate::Z(local_qubit));
+            z->update_quantum_state(state.get());
+            break;
+        }
+        case 2: {  // |psi+> = (|01> + |10>) / sqrt(2)
+            std::unique_ptr<QuantumGateBase> x(gate::X(neighbour_address));
+            x->update_quantum_state(state.get());
+            break;
+        }
+        case 3: {  // |psi-> = (|01> - |10>) / sqrt(2)
+            std::unique_ptr<QuantumGateBase> x(gate::X(neighbour_address));
+            std::unique_ptr<QuantumGateBase> z(gate::Z(local_qubit));
+            x->update_quantum_state(state.get());
+            z->update_quantum_state(state.get());
+            break;
+        }
+    }
+
+    static constexpr const char *bell_names[] = {"|phi+>", "|phi->", "|psi+>",
+                                                 "|psi->"};
+    LOG_INFO("attempt_entanglement (initiator): created " +
+             std::string(bell_names[bell_state]) + " on Q" +
+             std::to_string(local_qubit) + ",Q" +
+             std::to_string(neighbour_address));
+    return bell_state;
 }
 
 bool QulacsAdapter::qubit_move(uint8_t qubit1_address, uint8_t qubit2_address) {
