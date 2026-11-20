@@ -176,7 +176,20 @@ int8_t QulacsAdapter::attempt_entanglement(uint16_t fidelity,
 }
 
 bool QulacsAdapter::qubit_move(uint8_t qubit1_address, uint8_t qubit2_address) {
-    return false;
+    if (qubit1_address == qubit2_address) {
+        LOG_ERROR("Cannot move qubit : " + std::to_string(qubit1_address) +
+                  " to itself!");
+        return false;
+    }
+
+    std::unique_ptr<QuantumGateBase> swap(
+        gate::SWAP(qubit1_address, qubit2_address));
+    swap->update_quantum_state(state.get());
+    qubit_initialize(qubit1_address);
+
+    LOG_INFO("Moved qubit " + std::to_string(qubit1_address) + " to " +
+             std::to_string(qubit2_address));
+    return true;
 }
 
 bool QulacsAdapter::qubit_swap(uint8_t qubit1_address, uint8_t qubit2_address) {
