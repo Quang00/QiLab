@@ -174,7 +174,34 @@ int8_t QulacsAdapter::attempt_entanglement(uint16_t fidelity,
                                            uint8_t local_qubit,
                                            uint8_t neighbour_address,
                                            bool is_initiator, uint8_t qid) {
-    return -1;
+    if (local_qubit == neighbour_address) {
+        LOG_ERROR("Cannot entangle qubit " + std::to_string(local_qubit) +
+                  " with itself!");
+        return -1;
+    }
+    if (!is_initiator) {
+        LOG_INFO(
+            "attempt_entanglement (responder): pair created by initiator; Bell "
+            "state provided by manager");
+        return 0;
+    }
+
+    qubit_initialize(local_qubit);
+    qubit_initialize(neighbour_address);
+    std::unique_ptr<QuantumGateBase> h(gate::H(local_qubit));
+    std::unique_ptr<QuantumGateBase> x(gate::X(neighbour_address));
+    std::unique_ptr<QuantumGateBase> cnot(
+        gate::CNOT(local_qubit, neighbour_address));
+    h->update_quantum_state(state.get());
+    x->update_quantum_state(state.get());
+    cnot->update_quantum_state(state.get());
+    // Entangled state will be |psi+> by default, as done in
+    // StimAdapterNVCenters.
+    LOG_INFO(
+        "attempt_entanglement (initiator): created |psi+> = (|01> + |10>) / "
+        "sqrt(2) on Q" +
+        std::to_string(local_qubit) + ",Q" + std::to_string(neighbour_address));
+    return 2;
 }
 
 bool QulacsAdapter::qubit_move(uint8_t qubit1_address, uint8_t qubit2_address) {

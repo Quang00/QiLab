@@ -45,7 +45,7 @@ TEST(QulacsAdapterTest, SingleQubitGate4TGates) {
 }
 
 TEST(QulacsAdapterTest, TwoQubitGateZX) {
-    // ZX |00> = |01>  (|q0 q1>)
+    // ZX |00> = |01>
     auto adapter = make_adapter(2);
     ASSERT_TRUE(adapter->qubit_initialize(0));
     ASSERT_TRUE(adapter->qubit_initialize(1));
@@ -53,6 +53,13 @@ TEST(QulacsAdapterTest, TwoQubitGateZX) {
         adapter->two_qubit_gate(0, 1, Angle_t::_MINUS_PI, Axis_t::X_AXIS));
     EXPECT_EQ(adapter->qubit_measure(0, false), 0);
     EXPECT_EQ(adapter->qubit_measure(1, false), 1);
+}
+
+TEST(QulacsAdapterTest, AttemptEntanglementPsiPlus) {
+    auto adapter = make_adapter(2);
+    EXPECT_EQ(adapter->attempt_entanglement(1, 0, 1, true, 0), 2);
+    EXPECT_NE(adapter->qubit_measure(0, false),
+              adapter->qubit_measure(1, false));
 }
 
 TEST(QulacsAdapterTest, QubitSwapQubits) {
