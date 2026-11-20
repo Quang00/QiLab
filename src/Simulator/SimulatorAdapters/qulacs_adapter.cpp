@@ -30,7 +30,19 @@ bool QulacsAdapter::allocate_qubits(uint8_t num_qubits) {
     return true;
 }
 
-bool QulacsAdapter::qubit_initialize(uint8_t qubit_address) { return false; }
+bool QulacsAdapter::qubit_initialize(uint8_t qubit_address) {
+    std::unique_ptr<QuantumGateBase> measure(
+        gate::Measurement(qubit_address, 0, static_cast<UINT>(generator())));
+    measure->update_quantum_state(state.get());
+    if (state->get_classical_value(0) == 1) {
+        std::unique_ptr<QuantumGateBase> flip(gate::X(qubit_address));
+        flip->update_quantum_state(state.get());
+    }
+
+    LOG_INFO("Initialized qubit " + std::to_string(qubit_address) +
+             " to |0> state.");
+    return true;
+}
 
 bool QulacsAdapter::single_qubit_gate(uint8_t qubit_address, Angle_t angle,
                                       Axis_t axis) {
