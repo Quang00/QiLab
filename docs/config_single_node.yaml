@@ -1,0 +1,33 @@
+# QILab Node Configuration
+# Location: ~/.qilab/config/nodes.yaml
+# See config_guide.md for the field-by-field reference, and config.schema.json
+# for the machine-readable schema.
+
+# QiLab System Configuration
+system:
+  transmission_cycle_time_us: 20
+  qubit_noise_enabled: true
+  entanglement_noise_enabled: false
+
+nodes:
+  - name: node0
+    node_type: NV_CENTER
+    two_qubit_gate_noise_model:
+      type: DEPOLARIZING
+      depolarizing_probability: 0.02
+    quantum_operations_delay_ns:
+      two_qubit_gate_rotation: 300
+      measurement: 400
+      entanglement: 500
+      qubit_move: 600
+      qubit_swap: 400
+      qubit_init: 200
+    qubit_arrays:
+      - num_qubits: 2
+        single_gate_delay_ns: 200
+        qubit_decoherence_noise_model:
+          type: PHASE_FLIP
+          t2_value: 3.17e+7
+        gate_noise_model:
+          type: DEPOLARIZING
+          depolarizing_probability: 0.001
