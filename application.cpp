@@ -15,6 +15,7 @@
 #include <Simulator/SimulatorAdapters/mock_adapter.hpp>
 #include <Simulator/SimulatorAdapters/stim_adapter.hpp>
 #include <Simulator/SimulatorAdapters/stim_nv_adapter.hpp>
+#include <Simulator/SimulatorAdapters/qulacs_adapter.hpp>
 
 //Runners
 #include "Simulator/SimulatorRunners/simulator_runner.hpp"
@@ -116,9 +117,17 @@ int main()
     
     LOG_INFO("Configuration loaded with " + std::to_string(config->nodes.size()) + " nodes");
     
-    std::unique_ptr<StimAdapterNVCenters> stim_adapter =  std::make_unique<StimAdapterNVCenters>(seq, 0); //the seed is problematic
+    const char* simulator_env = std::getenv("QILAB_SIMULATOR");
+    std::unique_ptr<ISimulator> simulator;
+    if (simulator_env && std::string_view(simulator_env) == "qulacs") {
+        LOG_INFO("Using simulator backend: Qulacs");
+        simulator = std::make_unique<QulacsAdapter>(seq, 0);
+    } else {
+        LOG_INFO("Using simulator backend: Stim (NV centers)");
+        simulator = std::make_unique<StimAdapterNVCenters>(seq, 0); //the seed is problematic
+    }
     std::unique_ptr<SimulatorManager> sim_manager = std::make_unique<SimulatorManager>(
-        std::move(stim_adapter), config->system.qubit_noise_enabled, config->system.entanglement_noise_enabled);
+        std::move(simulator), config->system.qubit_noise_enabled, config->system.entanglement_noise_enabled);
 
 
     // Register nodes dynamically from configuration

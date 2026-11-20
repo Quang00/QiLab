@@ -5,6 +5,7 @@ QiLab is a C++20 framework for simulating quantum internet networks with a focus
 > **QiLab stands in for a quantum device. It speaks the QNodeOS instruction set, so any quantum network operating system that uses that instruction set can drive it. QNodeOS is not included with QiLab, and QiLab's license grants no rights to QNodeOS.** See the [QNodeOS notice](#qnodeos-notice).
 
 ## Demo
+
 ![QiLab demo: from Python to qubits and back](docs/demo/qilab_demo.mp4)
 
 A two-node remote state preparation run, then four nodes running entanglement-based key distribution in parallel. For the interactive version, download [docs/demo/qilab_demo.html](docs/demo/qilab_demo.html) and open it in a browser (Space pauses, F toggles fullscreen).
@@ -12,9 +13,11 @@ A two-node remote state preparation run, then four nodes running entanglement-ba
 ![Architecture Overview](docs/images/MultithreadedApplication-BigOverview_1.drawio.png)
 
 ## System Flow
+
 ![System Flow](docs/images/MultithreadedApplication-BigOverview.drawio.png)
 
 ## At a Glance
+
 - **ConfigurationEngine**: loads and validates the YAML node/link configuration (`ConfigurationEngine`)
 - **DataTypes**: wire-format command/response structs shared across the pipeline (`DataTypes`)
 - **Simulation**: Stim-backed adapters behind a pluggable interface, driven by a manager that owns all per-node state (`Simulator/SimulatorAdapters`, `Simulator/SimulatorManager`)
@@ -25,6 +28,7 @@ A two-node remote state preparation run, then four nodes running entanglement-ba
 - **Logging & Instrumentation**: a real-time-safe logger, low-overhead profiler, and structured data-acquisition sink (`logger`)
 
 ## Project Layout
+
 ```
 src/
   ConfigurationEngine/         # YAML config loading, parsing, model parsers
@@ -50,7 +54,9 @@ CHANGELOG.md                       # Release history
 ```
 
 ## Build
+
 Prerequisites:
+
 - CMake 3.14+ (project minimum)
 - C++20 toolchain. By default CMake cross-compiles for `aarch64-linux-gnu`. Override for host builds and enable tests in one step:
   ```bash
@@ -60,65 +66,80 @@ Prerequisites:
   `CMAKE_BUILD_TYPE` defaults to `Release` if unset. `Debug` additionally forces `ENABLE_LOGGING=ON`.
 
 Build options:
+
 | Option | Default | Effect |
 |---|---|---|
 | `ENABLE_PROFILING` | ON | Compiles in the low-overhead TLS profiler |
-| `ENABLE_LOGGING` | ON | Compiles in `StandardLogger`; always on regardless of build type (Debug additionally *forces* it on if you tried to turn it off) |
+| `ENABLE_LOGGING` | ON | Compiles in `StandardLogger`; always on regardless of build type (Debug additionally _forces_ it on if you tried to turn it off) |
 | `ENABLE_DATA_ACQUISITION` | ON | Compiles in the structured JSONL data-acquisition sink (see below) |
 | `BUILD_TESTING` | ON (via `include(CTest)`) | Builds the `test/` targets for `ctest` |
 
 Artifacts appear in `build/`: the `qilab` executable, static libraries, and (if `BUILD_TESTING=ON`) test binaries under `build/test/`.
 
-
 ## Build dev envirionment and extract results from (mock_handlers.cpp)
+
 1. Build:
+
 ```bash
 cmake -S . -B build-dev -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DRUN_MOCKED_TRANSMISSION"
 cmake --build build-dev -j$(nproc) --target qilab
 ```
 
 2. Run command with network config:
+
 ```bash
 QILAB_CONFIG_PATH=docs/config_example.yaml timeout 1 ./build-dev/qilab 2>log.log
 ```
 
 3. Get measurements:
+
 ```bash
 python3 scripts/extract_measurements.py log.log
 ```
 
 4. Get noise:
+
 ```bash
 python3 scripts/analyze_gate_noise_log.py log.log
 ```
 
 ## Run
+
 ```bash
 ./build/qilab
 ```
 
 Runtime notes:
+
 - `application.cpp` wires up and starts all three runner threads (simulator, entanglement, transmission) unconditionally.
 - Thread pinning is controlled via the `SIMULATOR_CORE`, `ENTANGLEMENT_CORE`, and `TRANSMISSION_CORE` constants in `application.cpp`.
 - `QILAB_LOG_LEVEL` (env var) sets the log level (`DEBUG`/`ERROR`/`OFF`); defaults to `DEBUG` if unset.
 - `QILAB_DAQ=1` (env var) enables the data-acquisition sink (see below); anything else or unset leaves it disabled.
+- `QILAB_SIMULATOR=qulacs` (env var) runs the Qulacs state-vector backend.
 - Graceful shutdown: send SIGINT or SIGTERM; each runner's `on_abort()` is called before the threads are joined.
 
+### Simulator backend
 
+| Backend | Description | Run |
+|---|---|---|
+| Stim (default) | Stabilizer simulator, Clifford gates only | `./build/qilab` |
+| Qulacs | State-vector simulator, any rotation angle (non-Clifford) | `QILAB_SIMULATOR=qulacs ./build/qilab` |
 
 ### Telemetry output paths
+
 Both instrument sinks write to fixed filenames under a directory that can be
 relocated by env var. This is the interface `qilab_web_control` reads to offer
 the files for download — the same static-file hand-off already used for
 `config.schema.json`.
 
 | Artifact | Default path | Override (first match wins) |
-|----------|--------------|------------------------------|
+|---|---|---|
 | DAQ records (JSONL) | `~/.qilab/logs/data_acquisition.jsonl` | `QILAB_DAQ_PATH` (full path), then `QILAB_DAQ_DIR` |
 | Profiler durations (CSV) | `~/.qilab/logs/profile_durations.csv` | `QILAB_PROFILER_PATH` (full base), then `QILAB_PROFILER_DIR` |
 | Profiler events (CSV) | `~/.qilab/logs/profile_events.csv` | same as above |
 
 CSV columns:
+
 - `profile_durations.csv` — `Event,Max[ns],Min[ns],Count,Avg[ns]`. `Avg[ns]` is
   the exact mean (`total_runtime / count`), so it always falls within
   `[Min, Max]`; a count of 0 reports 0.
@@ -129,15 +150,18 @@ The deployed systemd unit sets `QILAB_DAQ_DIR` and `QILAB_PROFILER_DIR` under
 Files are overwritten per run.
 
 Flush behaviour:
+
 - **DAQ** is flushed once per second from the main (non-real-time) thread and
-  again after all threads join, so the JSONL is readable *while a run is in
-  progress* and complete after shutdown.
+  again after all threads join, so the JSONL is readable _while a run is in
+  progress_ and complete after shutdown.
 - **Profiling** is inherently shutdown-only: each runner merges its thread-local
   counters into the global container as it exits, so the CSVs are written once,
   after every thread has joined. There is no partial-run profiling snapshot.
 
 ## Configuration
+
 QiLab loads node/link configuration from `~/.qilab/config/nodes.yaml` by default. A minimal default file is created automatically if none exists. Override the path with either env var (checked in this order):
+
 1. `QILAB_CONFIG_PATH` — an explicit full path, used as-is.
 2. `QILAB_CONFIG_DIR` — a directory; `nodes.yaml` is read from inside it.
 
@@ -191,6 +215,7 @@ system:
 ```
 
 ## Data Acquisition
+
 Structured, low-overhead JSONL recording for research/experiment data — separate from the human-readable log. Compiles away entirely when `ENABLE_DATA_ACQUISITION=OFF`; gated at runtime by `QILAB_DAQ=1` (see [Run](#run) above).
 
 ```cpp
@@ -207,14 +232,23 @@ DAQ_FLUSH(); // application.cpp already does this each second and at shutdown
 ```
 
 Each record auto-prefixes a `ts_us` (epoch microseconds) timestamp and channel name, producing one JSON object per line at the DAQ output path (see [Telemetry output paths](#telemetry-output-paths)):
+
 ```json
-{"ts_us":1751371200123456,"channel":"entanglement","attempt":42,"success":true,"fidelity":0.910000}
+{
+  "ts_us": 1751371200123456,
+  "channel": "entanglement",
+  "attempt": 42,
+  "success": true,
+  "fidelity": 0.91
+}
 ```
+
 Analyze with, e.g., `pandas.read_json(path, lines=True)`.
 
 This is distinct from `scripts/analyze_gate_noise_log.py` and `scripts/extract_measurements.py`, which parse the **plain-text `StandardLogger` log** (not the DAQ JSONL) for per-qubit measurement statistics, noise-probability/fidelity checks, and timing analysis — see each script's `--help` for options.
 
 ## Testing
+
 `test/` is split by scope: `Unit/` (one class/function, all collaborators mocked/stubbed), `Functional/` (multiple real components wired together, doubling only the outermost hardware-adapter boundary), and a scaffolded `Integration/` (real transmission-processor hardware, gated behind `-DQILAB_BUILD_INTEGRATION_TESTS=ON`, pending hardware availability — see `test/Integration/README.md`).
 
 ```bash
@@ -226,9 +260,11 @@ ctest --test-dir build --output-on-failure
 Every test is labeled `unit` or `functional` (`ctest -L unit` / `ctest -L functional` to filter). See `CLAUDE.md`'s Testing convention for the reference pattern to follow when adding new tests.
 
 ## Deployment
+
 For running QiLab as a systemd service in production (Raspberry Pi 5 target), see [docs/systemd_service_setup.md](docs/systemd_service_setup.md).
 
 ## Diagrams & Documentation
+
 - Architecture diagrams: `docs/Design/*.drawio`
 - Configuration reference: [docs/config_guide.md](docs/config_guide.md)
 - Hardware bill of materials (Raspberry Pi 5 QiLab box and QNodeOS boards): [docs/HwBOM_box.xlsx](docs/HwBOM_box.xlsx)
@@ -237,11 +273,13 @@ For running QiLab as a systemd service in production (Raspberry Pi 5 target), se
 - Core interfaces live under `src/`; headers include Doxygen comments for runners, brokers, transmission handlers, and profiling APIs.
 
 ## License
+
 Copyright (c) 2026, Quantum Internet Alliance, Delft University of Technology, Milen Kolev, Samuel Oslovich, Jake Smith, Stephanie Wehner.
 
 QiLab is released under the [Clear BSD License](LICENSE) (SPDX: `BSD-3-Clause-Clear`). This license grants no patent rights. Every source file carries the matching SPDX header.
 
 ### QNodeOS notice
+
 1. **What QiLab is.** QiLab stands in for a quantum device. It receives and answers operations in the QNodeOS instruction set (the interface between a quantum network operating system and its quantum device). Any quantum network operating system that uses this instruction set, QNodeOS among them, can communicate with QiLab.
 2. **Not included.** QNodeOS and any other operating system are separate software. They are not part of QiLab and are not provided, distributed or sublicensed with QiLab.
 3. **No rights granted.** The QiLab license covers QiLab only. It grants no rights of any kind, express or implied, in QNodeOS or in the QNodeOS instruction set or its specifications, including copyright, patent and trademark rights. QiLab implements the device side of the instruction set solely for interoperability.
@@ -249,9 +287,12 @@ QiLab is released under the [Clear BSD License](LICENSE) (SPDX: `BSD-3-Clause-Cl
 5. **Name only.** The name "QNodeOS" is used here only to describe compatibility. It does not imply endorsement by the QNodeOS rights holders.
 
 ### Third-party software
+
 Third-party dependencies are fetched at build time and remain under their own licenses:
+
 - [Stim](https://github.com/quantumlib/stim) (v1.15.0): Apache License 2.0. Statically linked into the `qilab` binary. Release archives include its license as `LICENSE.stim`.
 - [GoogleTest](https://github.com/google/googletest) (tests only, not shipped): BSD 3-Clause License.
 
 ---
+
 Active development project — APIs and wiring may change.
