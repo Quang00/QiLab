@@ -29,7 +29,7 @@ A two-node remote state preparation run, then four nodes running entanglement-ba
 
 ## Project Layout
 
-```
+```bash
 src/
   ConfigurationEngine/         # YAML config loading, parsing, model parsers
   DataTransmission/            # Transmission handlers, processor, runner
@@ -37,7 +37,7 @@ src/
   logger/                      # StandardLogger, Profiler, DataAcquisition
   MessageBroker/                # Thread-safe broker and ring buffer
   Simulator/
-    SimulatorAdapters/          # ISimulator implementations (Stim-backed, mock)
+    SimulatorAdapters/          # ISimulator implementations (Stim-backed, mock, Qulacs-backed)
     SimulatorManager/            # Per-node dispatch, timing, noise application
     EntanglementManager/          # Request matching, batching, delay
     NoiseModels/                   # Qubit decoherence + entanglement-generation noise
