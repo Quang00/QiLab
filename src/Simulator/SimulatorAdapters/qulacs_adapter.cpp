@@ -117,10 +117,12 @@ bool QulacsAdapter::two_qubit_gate(uint8_t qubit1_address,
 
     const double theta =
         (angle < 16 ? angle : angle - 32) * std::numbers::pi / 16.0;
+    // Same axis rotation convention as in StimAdapterNVCenters:
+    constexpr UINT pauli_z = 3;
     const UINT pauli = axis + 1;
 
     std::unique_ptr<QuantumGateBase> rotation(gate::PauliRotation(
-        {qubit1_address, qubit2_address}, {pauli, pauli}, -theta));
+        {qubit1_address, qubit2_address}, {pauli_z, pauli}, -theta));
     rotation->update_quantum_state(state.get());
 
     LOG_INFO(
