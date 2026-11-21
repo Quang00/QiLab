@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
 #pragma once
+#include <complex>
 #include <cstdint>
 #include <memory>
 #include <random>
@@ -46,9 +47,13 @@ public:
     bool allocate_qubits(uint8_t num_qubits) override;
 
 private:
+    uint8_t measure_z(uint8_t qubit_address);
+
     uint8_t registered_qubits = 0;
     std::mt19937_64 generator;
     std::unique_ptr<QuantumStateCpu> state;
+    std::complex<double> *data = nullptr;
+    std::uint64_t dim = 0;
 
     QulacsAdapter(const QulacsAdapter &) = delete;
     QulacsAdapter(QulacsAdapter &&) = delete;
